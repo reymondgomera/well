@@ -1,0 +1,139 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+model User {
+  id                   Int        @id @default(autoincrement())
+  userName             String     @unique
+  email                String     @unique
+  password             String
+  firstName            String
+  lastName             String
+  middleInitial        String?
+  createdAt            DateTime   @default(now())
+  updatedAt            DateTime   @default(now()) @updatedAt
+  deletedAt            DateTime?
+  roleId               Int
+  statusId             Int
+  departmentId         Int?
+  role                 Reference  @relation("user_roleIdToReference", fields: [roleId], references: [id])
+  department           Reference? @relation("user_departmentIdToReference", fields: [departmentId], references: [id])
+  status               Reference  @relation("user_statusIdToReference", fields: [statusId], references: [id])
+  physicianCheckups    Checkup[]  @relation("checkup_physicianIdToUser")
+  receptionistCheckups Checkup[]  @relation("checkup_receptionistIdToUser")
+  profile              Profile?   @relation("profile_userIdtoUser")
+}
+
+model Entity {
+  id        Int         @id @default(autoincrement())
+  code      String      @unique
+  name      String
+  createdAt DateTime    @default(now())
+  updatedAt DateTime    @default(now()) @updatedAt
+  deletedAt DateTime?
+  isShow    Boolean     @default(true)
+  isDefault Boolean     @default(false)
+  isParent  Boolean     @default(false)
+  parentId  Int?
+  fieldProp String
+  parent    Entity?     @relation("entityToEntity", fields: [parentId], references: [id])
+  entity    Entity[]    @relation("entityToEntity")
+  reference Reference[]
+}
+
+model Reference {
+  id                    Int       @id @default(autoincrement())
+  code                  String    @unique
+  name                  String
+  createdAt             DateTime  @default(now())
+  updatedAt             DateTime  @default(now()) @updatedAt
+  deletedAt             DateTime?
+  isShow                Boolean   @default(true)
+  isDefault             Boolean   @default(false)
+  entityId              Int
+  entity                Entity    @relation(fields: [entityId], references: [id], onDelete: Cascade)
+  patient_genderId      Patient[] @relation("patient_genderIdToReference")
+  patient_occupationId  Patient[] @relation("patient_occupationIdToReference")
+  patient_civilStatusId Patient[] @relation("patient_civilStatusIdToReference")
+  user_roleId           User[]    @relation("user_roleIdToReference")
+  user_departmentId     User[]    @relation("user_departmentIdToReference")
+  user_statusId         User[]    @relation("user_statusIdToReference")
+  checkups              Checkup[] @relation("checkup_statusIdtoReference")
+}
+
+model Patient {
+  id                 Int        @id @default(autoincrement())
+  firstName          String
+  lastName           String
+  middleInitial      String?
+  address            String
+  dateOfBirth        DateTime
+  civilStatusId      Int
+  age                Int
+  occupationId       Int?
+  genderId           Int
+  contactNumber      String?
+  familyHistory      Json
+  personalHistory    Json
+  pastMedicalHistory Json
+  obGyne             Json?
+  createdAt          DateTime   @default(now())
+  updatedAt          DateTime   @default(now()) @updatedAt
+  gender             Reference  @relation("patient_genderIdToReference", fields: [genderId], references: [id])
+  occupation         Reference? @relation("patient_occupationIdToReference", fields: [occupationId], references: [id])
+  civilStatus        Reference  @relation("patient_civilStatusIdToReference", fields: [civilStatusId], references: [id])
+  checkups           Checkup[]  @relation("checkup_patientIdToPatient")
+}
+
+model Checkup {
+  id                 Int       @id @default(autoincrement())
+  patientId          Int
+  physicianId        Int
+  receptionistId     Int
+  clinicId           Int
+  vitalSigns         Json
+  diagnoses          Json?
+  treatments         Json?
+  dietaryAdviseGiven String?
+  followUp           DateTime?
+  statusId           Int
+  createdAt          DateTime  @default(now())
+  date               DateTime  @default(now()) @db.Date
+  patient            Patient   @relation("checkup_patientIdToPatient", fields: [patientId], references: [id], onDelete: Cascade)
+  physician          User      @relation("checkup_physicianIdToUser", fields: [physicianId], references: [id])
+  receptionist       User      @relation("checkup_receptionistIdToUser", fields: [receptionistId], references: [id])
+  status             Reference @relation("checkup_statusIdtoReference", fields: [statusId], references: [id])
+  clinic             Clinic    @relation("checkup_clinicIdToClinic", fields: [clinicId], references: [id], onDelete: Cascade)
+
+  @@unique([patientId, date])
+}
+
+model Profile {
+  userId      Int      @id @unique
+  roleProfile Json?
+  clinics     Clinic[]
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @default(now()) @updatedAt
+  user        User     @relation("profile_userIdtoUser", fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model Clinic {
+  id            Int       @id @default(autoincrement())
+  code          String    @unique
+  name          String
+  address       String
+  contactNumber String[]
+  daysOpen      String
+  openingTime   DateTime  @db.Time()
+  closingTime   DateTime  @db.Time()
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @default(now()) @updatedAt
+  profile       Profile[]
+  checkups      Checkup[] @relation("checkup_clinicIdToClinic")
+}

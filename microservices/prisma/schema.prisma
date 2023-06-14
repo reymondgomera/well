@@ -1,0 +1,118 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Users {
+  id             String   @unique @default(uuid())
+  email          String   @unique
+  hashedPassword String
+  resetToken     String?
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @default(now()) @updatedAt
+}
+
+model Patient {
+  id                 String            @unique @default(uuid())
+  First_Name         String
+  Last_Name          String
+  middleinitial      String?           @default("N/A")
+  Address            String
+  DateOfBirth        DateTime
+  civilstatusId      Int
+  Age                Int
+  occupationId       Int
+  genderId           Int
+  contactNumber      String?           @default("N/A")
+  familyHistory      Json
+  personalHistory    Json
+  pastMedicalHistory Json
+  obGyne             Json
+  createdAt          DateTime          @default(now())
+  updatedAt          DateTime          @default(now()) @updatedAt
+  gender             Reference         @relation("patient_genderIdtoReference_relation", fields: [genderId], references: [id])
+  occupation         Reference         @relation("patient_occupationIdtoReference_relation", fields: [occupationId], references: [id])
+  civilstatus        Reference         @relation("patient_civilStatusIdtoReference_relation", fields: [civilstatusId], references: [id])
+  physical_checkup   PhysicalCheckup[]
+}
+
+model PhysicalCheckup {
+  id             String     @unique @default(uuid())
+  patientId      String
+  physicianId    String
+  Date           DateTime   @default(now())
+  Vital_Signs    Json
+  Diagnosis      Json
+  Treatment      Json
+  medicineId     Int?
+  Dietary_Advise String?    @default("N/A")
+  Follow_up      DateTime?
+  Medicine       Reference? @relation("physicalCheckup_medicinetoReference_relation", fields: [MedicineId], references: [id])
+  Patient        Patient    @relation(fields: [patientId], references: [id], onDelete: Cascade)
+  physician      Physician  @relation(fields: [physicianId], references: [id], onDelete: Cascade)
+}
+
+model Entity {
+  id        Int         @unique @default(autoincrement())
+  code      String      @unique
+  name      String
+  createdAt DateTime    @default(now())
+  updatedAt DateTime    @default(now()) @updatedAt
+  deletedAt DateTime?   @default(now())
+  isShow    Boolean     @default(true)
+  isDefault Boolean     @default(false)
+  isParent  Boolean     @default(false)
+  parentId  Int?        @unique
+  fieldprop String?
+  parent    Entity?     @relation("entitiesToEntities", fields: [parentId], references: [id])
+  entities  Entity?     @relation("entitiesToEntities")
+  reference Reference[]
+}
+
+model Reference {
+  id                                           Int               @unique @default(autoincrement())
+  code                                         String            @unique
+  name                                         String
+  createdAt                                    DateTime          @default(now())
+  updatedAt                                    DateTime          @default(now()) @updatedAt
+  deletedAt                                    DateTime?
+  isShow                                       Boolean           @default(true)
+  isDefault                                    Boolean           @default(false)
+  entityId                                     Int
+  entities                                     Entity            @relation(fields: [entityId], references: [id], onDelete: Cascade)
+  patient_genderIdtoReference                  Patient[]         @relation("patient_genderIdtoReference_relation")
+  patient_occupationIdtoReference              Patient[]         @relation("patient_occupationIdtoReference_relation")
+  patient_civilStatusIdtoReference             Patient[]         @relation("patient_civilStatusIdtoReference_relation")
+  physician_genderIdtoReference                Physician[]       @relation("physician_genderIdtoReference_relation")
+  physician_civilStatusIdtoReference           Physician[]       @relation("physician_civilStatusIdtoReference_relation")
+  physicalCheckup_medicinetoReference_relation PhysicalCheckup[] @relation("physicalCheckup_medicinetoReference_relation")
+}
+
+model Treatment {
+  id         Int    @unique @default(autoincrement())
+  ref_cd     String @unique
+  ref_nm     String @unique
+  brandid_no Int?
+  expday_no  Int
+}
+
+model Physician {
+  id              String            @unique @default(uuid())
+  FirstName       String
+  LastName        String
+  MiddleInitial   String?           @default("N/A")
+  dateOfBirth     DateTime
+  Age             Int
+  Address         String
+  genderId        Int
+  civilstatusId   Int
+  contactNumber   String?
+  email           String
+  gender          Reference         @relation("physician_genderIdtoReference_relation", fields: [genderId], references: [id])
+  civilstatus     Reference         @relation("physician_civilStatusIdtoReference_relation", fields: [civilstatusId], references: [id])
+  physicalCheckup PhysicalCheckup[]
+}
