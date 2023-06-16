@@ -90,9 +90,9 @@ const CustomApp = ({ Component, pageProps, emotionCache }: ExtendedAppProps) => 
         <title>{`${themeConfig.templateName}`}</title>
         <meta
           name='description'
-          content={`${themeConfig.templateName} – Better Way to Manage your Business and Access your data Anytime, Anywhere – Web Application for monitoring Sales & Inventory.`}
+          content={`${themeConfig.templateName} – A web-based clinic system that is designed to streamline and manage various aspects of a clinic's operations.`}
         />
-        <meta name='keywords' content='Material Design, MUI, Admin Template, React Admin Template' />
+        <meta name='keywords' content='Web App, Web-Based App, Clinic System' />
         <meta name='viewport' content='initial-scale=1, width=device-width' />
       </Head>
 
